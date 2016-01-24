@@ -36,4 +36,12 @@ public class BookingDaoImpl implements BookingDao{
         return hotelInventoryVO;
 	}
 
+	public void createInventory(HotelInventoryVO hotelInventoryVO) {
+		
+		String query = "INSERT INTO hms_hotel_inventory(room_id, room_type) VALUES (?, ?)";		
+		JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);		
+		jdbcTemplate.update( query, hotelInventoryVO.getRoomId(), hotelInventoryVO.getRoomType());
+		
+	}
+
 }

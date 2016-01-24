@@ -1,37 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-	xmlns:util="http://www.springframework.org/schema/util"
-	xmlns:jaxrs="http://cxf.apache.org/jaxrs"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:jaxrs="http://cxf.apache.org/jaxrs" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans 
 						http://www.springframework.org/schema/beans/spring-beans.xsd
 						http://www.springframework.org/schema/util 
 						http://www.springframework.org/schema/util/spring-util.xsd
 						http://cxf.apache.org/jaxrs 
-						http://cxf.apache.org/schemas/jaxrs.xsd">
+						http://cxf.apache.org/schemas/jaxrs.xsd
+						http://www.springframework.org/schema/tx
+        				http://www.springframework.org/schema/tx/spring-tx.xsd
+        				http://www.springframework.org/schema/aop
+        				http://www.springframework.org/schema/aop/spring-aop.xsd">
 
 	<import resource="classpath:META-INF/cxf/cxf.xml" />
-    <import resource="classpath:META-INF/cxf/cxf-servlet.xml"/>
-    
+	<import resource="classpath:META-INF/cxf/cxf-servlet.xml" />
 
-	<bean id="jsonProvider" class="org.codehaus.jackson.jaxrs.JacksonJaxbJsonProvider"/>
-  	<jaxrs:server id="bookingApi" address="/booking">
-        <jaxrs:serviceBeans>
-           <ref bean="testService" />
-        </jaxrs:serviceBeans>
-        <jaxrs:providers>
-			<ref bean='jsonProvider' />			
+
+	<bean id="jsonProvider" class="org.codehaus.jackson.jaxrs.JacksonJaxbJsonProvider" />
+	<jaxrs:server id="bookingApi" address="/booking">
+		<jaxrs:serviceBeans>
+			<ref bean="testService" />
+		</jaxrs:serviceBeans>
+		<jaxrs:providers>
+			<ref bean='jsonProvider' />
 		</jaxrs:providers>
-    </jaxrs:server>
-    
-    <bean id="ds_hms_booking" class="org.springframework.jndi.JndiObjectFactoryBean">
+	</jaxrs:server>
+
+	<bean id="ds_hms_booking" class="org.springframework.jndi.JndiObjectFactoryBean">
 		<property name="jndiName" value="java:comp/env/jdbc/ds_hms_booking" />
 	</bean>
-	
-	
+
+
 	<bean id="bookingDao" class="com.svtech.hms.booking.dao.BookingDaoImpl">
-    <property name="dataSource" ref="ds_hms_booking" />
+		<property name="dataSource" ref="ds_hms_booking" />
 	</bean>
 	
+	<bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="ds_hms_booking"/>
+    </bean>
+	
+	<tx:advice id="txAdvice" transaction-manager="txManager">
+        <!-- the transactional semantics... -->
+        <tx:attributes>
+            <!-- all methods starting with 'get' are read-only -->
+            <tx:method name="get*" read-only="true"/>
+            <!-- other methods use the default transaction settings (see below) -->
+            <tx:method name="*"/>
+        </tx:attributes>
+    </tx:advice>
     
+     <aop:config>
+        <aop:pointcut id="serviceOperation" expression="execution(* com.svtech.hms..service.*.*(..))"/>
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="serviceOperation"/>
+    </aop:config>
+
+
 </beans>
