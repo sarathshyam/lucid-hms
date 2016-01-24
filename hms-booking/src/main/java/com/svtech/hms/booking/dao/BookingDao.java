@@ -5,5 +5,7 @@ import com.svtech.hms.booking.vo.HotelInventoryVO;
 public interface BookingDao {
 	
 	public HotelInventoryVO getInv(String roomId);
+	
+	public void createInventory(HotelInventoryVO hotelInventoryVO);
 
 }
